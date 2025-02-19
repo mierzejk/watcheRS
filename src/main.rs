@@ -102,7 +102,7 @@ pub fn main() {
             println!("Following {:?}", file);
             tail(file, interval); }
         Action::Write { interval: ref sleep } => {
-            println!("Writing to: {:?} every {} millisecond.", file, *sleep);
+            println!("Writing to: {:?} every {} milliseconds.", file, *sleep);
             write(file, sleep); }
         _ => { println!("'{}' is not a file!", file.display()) }
     };
