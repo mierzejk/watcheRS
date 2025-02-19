@@ -14,6 +14,7 @@
 .idea/**/dbnavigator.xml
 .idea/**/gradle.xml
 .idea/**/libraries
+.idea/**/httpRequests
 cmake-build-*/
 .idea/**/mongoSettings.xml
 *.iws
@@ -26,7 +27,6 @@ com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
 fabric.properties
-.idea/httpRequests
 .idea/caches/build_file_checksums.ser
 debug/
 target/

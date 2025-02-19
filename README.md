@@ -1,6 +1,6 @@
 # watcheRS
-Follow lines appended to a file, or append current time to a file at intervals. Written in Rust, makes use of the inode notify (inotify) kernel subsystem.
-
+Follow lines appended to a file, or append current time to a file at intervals. Written in Rust, makes use of the inode notify (inotify) kernel subsystem.  
+Build with `cargo build --all --all-targets --profile release`.
 ```
 $ watcheRS --help
 Read, follow and print out any changes in the specified file; or append current time to the file at intervals
