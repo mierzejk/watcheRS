@@ -110,7 +110,7 @@ pub fn main() {
 
     match args.command.unwrap_or(Action::Read{ sleep: 10u32, use_polling: false }) {
         Action::Read { sleep: ref interval, use_polling: ref polling } if file.is_file() => {
-            println!("Following {:?}", file);
+            println!("Following {:?} file descriptor using {}", file, if *polling { "polling." } else { "inotify subsystem." });
             tail(file, interval, polling); }
         Action::Write { interval: ref sleep } => {
             println!("Writing to: {:?} every {} milliseconds.", file, *sleep);
