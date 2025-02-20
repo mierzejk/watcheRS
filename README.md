@@ -20,7 +20,7 @@ Commands:
     Usage: watcheRS <FILE> read [OPTIONS]
     Options:
       -s, --sleep <SLEEP>        second interval [default: 10]
-      -u, --use-polling          Disable inotify and employ polling instead
+      -p, --use-polling          Disable inotify and employ polling instead
       
   write  [alias: w] Append current time to the file at specified intervals
     Usage: watcheRS <FILE> write [OPTIONS]

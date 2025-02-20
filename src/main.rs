@@ -20,7 +20,7 @@ enum Action {
         /// second interval
         #[arg(short, long, default_value_t = 10u32)]
         sleep: u32,
-        #[clap(long, short, required = false, default_value_t = false)]
+        #[clap(long, short='p', required = false, default_value_t = false)]
         /// Disable inotify and employ polling instead
         use_polling: bool
     },
