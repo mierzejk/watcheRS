@@ -1,16 +1,20 @@
 use std::{
     ffi::OsString,
     fmt, fmt::Formatter,
-    fs::OpenOptions,
+    fs::{File, OpenOptions},
     io, io::Write,
+    ops::DerefMut,
+    os::unix::fs::MetadataExt,
     path, path::PathBuf,
     process,
     thread::sleep};
 use clap::{arg, command, Parser, Subcommand};
 use chrono::Local;
 use expanduser::expanduser;
+use file_guard::Lock;
 
 static FORMAT_NOW: &'static str = "%H:%M:%S";
+static LINE_SIZE: usize = 14usize;
 
 #[derive(Subcommand)]
 enum Action {
@@ -83,6 +87,16 @@ fn tail(file_path: PathBuf, sleep: &u32, use_polling: &bool) {
     uu_tail::uumain(args.into_iter());
 }
 
+fn write_line(mut file: &File) -> io::Result<()> {
+    let now = Local::now();
+    let now_str = format!("{}.{:0>3}", now.format(FORMAT_NOW), now.timestamp_subsec_millis());
+    writeln!(file, "{}", now_str)?;
+    file.flush()?;
+    println!("{}", now_str);
+    file.sync_all()?;
+    Ok(())
+}
+
 fn write(file_path: PathBuf, interval: &u32) ->! {
     let duration = core::time::Duration::from_millis(*interval as u64);
     let mut file = OpenOptions::new()
@@ -91,13 +105,20 @@ fn write(file_path: PathBuf, interval: &u32) ->! {
         .open(file_path).expect("Cannot open the file.");
 
     loop {
-        let now = Local::now();
-        let now_str = format!("{}.{:0>3}", now.format(FORMAT_NOW), now.timestamp_subsec_millis());
-        writeln!(file, "{}", now_str).expect("Cannot append to the file.");
-        file.flush().expect("Cannot flush the file.");
-        println!("{}", now_str);
-        file.sync_all().expect("Cannot synchronise the file.");
         sleep(duration);
+        file.sync_all().expect("Cannot synchronise the file.");
+        let file_size = usize::try_from(file.metadata().expect("Cannot get file metadata").size()).expect("Reading file size failed: cannot convert u64 to usize");
+        let lock_result = file_guard::try_lock(
+            &mut file,
+            Lock::Exclusive,
+            usize::MIN,
+            file_size + LINE_SIZE);
+        let Ok(mut lock) = lock_result else {
+            println!("WARN: Cannot lock the file; append skipped.");
+            continue;
+        };
+        write_line(lock.deref_mut()).expect("Cannot append a line to the file.");
+        drop(lock);
     }
 }
 
