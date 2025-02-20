@@ -27,5 +27,5 @@ Commands:
     Options:
       -i, --interval <INTERVAL>  millisecond interval [default: 2000]
       
-  help              Print this message or the help of the given subcommand(s)
+  help           Print this message or the help of the given subcommand(s)
 ```
