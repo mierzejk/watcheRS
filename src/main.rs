@@ -18,7 +18,7 @@ enum Action {
     #[clap(alias = "r")]
     Read{
         /// second interval
-        #[arg(short, long, default_value_t = 20u32)]
+        #[arg(short, long, default_value_t = 10u32)]
         sleep: u32,
         #[clap(long, short, required = false, default_value_t = false)]
         /// Disable inotify and employ polling instead
@@ -73,7 +73,8 @@ fn tail(file_path: PathBuf, sleep: &u32, use_polling: &bool) {
     let mut args = vec![
         OsString::from("tail"),
         file_path.into_os_string(),
-        OsString::from("--follow"),
+        OsString::from("--lines=1"),
+        OsString::from("--follow=descriptor"),
         OsString::from(format!("--sleep-interval={}", *sleep))];
     if *use_polling {
         args.push(OsString::from("--use-polling"));
@@ -107,7 +108,7 @@ pub fn main() {
         process::exit(0);
     }).expect("Cannot set SIGINT handler.");
 
-    match args.command.unwrap_or(Action::Read{ sleep: 20u32, use_polling: false }) {
+    match args.command.unwrap_or(Action::Read{ sleep: 10u32, use_polling: false }) {
         Action::Read { sleep: ref interval, use_polling: ref polling } if file.is_file() => {
             println!("Following {:?}", file);
             tail(file, interval, polling); }

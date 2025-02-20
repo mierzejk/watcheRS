@@ -19,7 +19,7 @@ Commands:
   read   [alias: r] Print out the last line in the file, and then follow any incoming changes
     Usage: watcheRS <FILE> read [OPTIONS]
     Options:
-      -s, --sleep <SLEEP>        second interval [default: 20]
+      -s, --sleep <SLEEP>        second interval [default: 10]
       -u, --use-polling          Disable inotify and employ polling instead
       
   write  [alias: w] Append current time to the file at specified intervals
