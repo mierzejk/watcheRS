@@ -34,6 +34,9 @@ enum Action {
         /// millisecond interval
         #[arg(short, long, default_value_t = 2000u32)]
         interval: u32,
+        #[clap(long, short='l', required = false, default_value_t = false)]
+        /// Claim the lock when writing to the file
+        use_locking: bool
     }
 }
 
@@ -41,8 +44,8 @@ fn action_fmt(action: &Action, f: &mut Formatter) -> fmt::Result {
     match action {
         Action::Read{ sleep: ref i, use_polling: ref polling} =>
             write!(f, "Read with {:?} s sleep interval with {}", *i, if *polling { "polling" } else { "inotify subsystem" }),
-        Action::Write{ interval: ref i} =>
-            write!(f, "Write at {:?} ms", *i)
+        Action::Write{ interval: ref i, use_locking: ref locking} =>
+            write!(f, "Write at {:?} ms with{} locking", *i, if *locking { "" } else { "out" })
     }
 }
 
@@ -143,8 +146,8 @@ pub fn main() {
         Action::Read { sleep: ref interval, use_polling: ref polling } if file.is_file() => {
             println!("Following {:?} file descriptor using {}", file, if *polling { "polling." } else { "inotify subsystem." });
             tail(file, interval, polling); }
-        Action::Write { interval: ref sleep } => {
-            println!("Writing to: {:?} every {} milliseconds.", file, *sleep);
+        Action::Write { interval: ref sleep, use_locking: ref locking } => {
+            println!("Writing to: {:?} every {} milliseconds with{} locking.", file, *sleep, if *locking { "" } else { "out" });
             write(file, sleep); }
         _ => { println!("'{}' is not a file!", file.display()) }
     };
