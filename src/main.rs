@@ -77,6 +77,7 @@ impl Cli {
 
 #[inline(always)]
 fn tail(file_path: PathBuf, sleep: &u32, use_polling: &bool) {
+    println!("Following {:?} file descriptor using {}", file_path, if *use_polling { "polling." } else { "inotify subsystem." });
     let mut args = vec![
         OsString::from("tail"),
         file_path.into_os_string(),
@@ -107,15 +108,17 @@ fn get_size(file: &File) -> io::Result<usize> {
     )
 }
 
-fn write(file_path: PathBuf, interval: &u32) ->! {
-    let duration = core::time::Duration::from_millis(*interval as u64);
-    let mut file = OpenOptions::new()
-        .append(true)
-        .create(true)
-        .open(file_path).expect("Cannot open the file.");
-
+//noinspection SpellCheckingInspection
+fn write_nolock(file: File, duration: &core::time::Duration) ->! {
     loop {
-        sleep(duration);
+        sleep(*duration);
+        write_line(&file).expect("Cannot append a line to the file.");
+    }
+}
+
+fn write_lock(mut file: File, duration: &core::time::Duration) ->! {
+    loop {
+        sleep(*duration);
         let file_size = get_size(&file).expect("Cannot get the file size.");
         let lock_result = file_guard::try_lock(
             &mut file,
@@ -135,6 +138,19 @@ fn write(file_path: PathBuf, interval: &u32) ->! {
     }
 }
 
+fn write(file_path: PathBuf, interval: &u32, locking: &bool) ->! {
+    println!("Writing to: {:?} every {} milliseconds with{} locking.", file_path, *interval, if *locking { "" } else { "out" });
+    let duration = core::time::Duration::from_millis(*interval as u64);
+    let file = OpenOptions::new()
+        .append(true)
+        .create(true)
+        .open(file_path).expect("Cannot open the file.");
+    match *locking {
+        true => write_lock(file, &duration),
+        false => write_nolock(file, &duration)
+    }
+}
+
 pub fn main() {
     let args = Cli::parse();
     let file = args.expand_path().unwrap();
@@ -143,14 +159,12 @@ pub fn main() {
     }).expect("Cannot set SIGINT handler.");
 
     match args.command.unwrap_or(Action::Read{ sleep: 10u32, use_polling: false }) {
-        Action::Read { sleep: ref interval, use_polling: ref polling } if file.is_file() => {
-            println!("Following {:?} file descriptor using {}", file, if *polling { "polling." } else { "inotify subsystem." });
-            tail(file, interval, polling); }
-        Action::Write { interval: ref sleep, use_locking: ref locking } => {
-            println!("Writing to: {:?} every {} milliseconds with{} locking.", file, *sleep, if *locking { "" } else { "out" });
-            write(file, sleep); }
+        Action::Read { sleep: ref interval, use_polling: ref polling } if file.is_file() =>
+            { tail(file, interval, polling); }
+        Action::Write { interval: ref sleep, use_locking: ref locking } =>
+            { write(file, sleep, locking); }
         _ => { println!("'{}' is not a file!", file.display()) }
     };
-
+    
     process::exit(1)
 }
