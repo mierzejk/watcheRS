@@ -26,6 +26,7 @@ Commands:
     Usage: watcheRS <FILE> write [OPTIONS]
     Options:
       -i, --interval <INTERVAL>  millisecond interval [default: 2000]
+      -l, --use-locking          Claim the lock when writing to the file
       
   help           Print this message or the help of the given subcommand(s)
 ```
