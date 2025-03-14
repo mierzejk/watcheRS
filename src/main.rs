@@ -3,18 +3,18 @@ use std::{
     fmt, fmt::Formatter,
     fs::{File, OpenOptions},
     io, io::Write,
-    ops::DerefMut,
     os::unix::fs::MetadataExt,
     path, path::PathBuf,
     process,
     thread::sleep};
+use std::ops::{Deref, DerefMut};
 use clap::{arg, command, Parser, Subcommand};
 use chrono::Local;
 use expanduser::expanduser;
 use file_guard::Lock;
 
 static FORMAT_NOW: &'static str = "%H:%M:%S";
-static LINE_SIZE: usize = 14usize;
+static LINE_SIZE: usize = 13usize;
 
 #[derive(Subcommand)]
 enum Action {
@@ -123,6 +123,10 @@ fn write(file_path: PathBuf, interval: &u32) ->! {
             println!("WARN: Cannot lock the file; append skipped.");
             continue;
         };
+        if get_size(lock.deref()).expect("Cannot get the file size.") != file_size {
+            println!("WARN: The file size has changed; append skipped.");
+            continue;
+        }
         write_line(lock.deref_mut()).expect("Cannot append a line to the file.");
         drop(lock);
     }
