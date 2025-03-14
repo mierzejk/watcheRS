@@ -93,8 +93,15 @@ fn write_line(mut file: &File) -> io::Result<()> {
     writeln!(file, "{}", now_str)?;
     file.flush()?;
     println!("{}", now_str);
-    file.sync_all()?;
+    file.sync_data()?;
     Ok(())
+}
+
+fn get_size(file: &File) -> io::Result<usize> {
+    file.sync_all()?;
+    usize::try_from(file.metadata()?.size()).or_else(
+        |err| Err(io::Error::new(io::ErrorKind::InvalidData, err.to_string()))
+    )
 }
 
 fn write(file_path: PathBuf, interval: &u32) ->! {
@@ -106,8 +113,7 @@ fn write(file_path: PathBuf, interval: &u32) ->! {
 
     loop {
         sleep(duration);
-        file.sync_all().expect("Cannot synchronise the file.");
-        let file_size = usize::try_from(file.metadata().expect("Cannot get file metadata").size()).expect("Reading file size failed: cannot convert u64 to usize");
+        let file_size = get_size(&file).expect("Cannot get the file size.");
         let lock_result = file_guard::try_lock(
             &mut file,
             Lock::Exclusive,
