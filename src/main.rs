@@ -131,9 +131,10 @@ fn write_lock(mut file: File, duration: &core::time::Duration) ->! {
         };
         if get_size(lock.deref()).expect("Cannot get the file size.") != file_size {
             println!("WARN: The file size has changed; append skipped.");
-            continue;
         }
-        write_line(lock.deref_mut()).expect("Cannot append a line to the file.");
+        else {
+            write_line(lock.deref_mut()).expect("Cannot append a line to the file.");
+        }
         drop(lock);
     }
 }
